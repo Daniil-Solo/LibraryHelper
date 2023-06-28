@@ -6,7 +6,7 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS public.books
 (
     id bigserial NOT NULL,
-    name character(256) NOT NULL,
+    name varchar(256) NOT NULL,
     register_date date NOT NULL,
     PRIMARY KEY (id),
 	UNIQUE (name)
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.books
 CREATE TABLE IF NOT EXISTS public.authors
 (
     id bigserial NOT NULL,
-    full_name character(256) NOT NULL,
+    full_name varchar(256) NOT NULL,
     PRIMARY KEY (id),
 	UNIQUE (full_name)
 );
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.authors
 CREATE TABLE IF NOT EXISTS public.genres
 (
     id bigserial NOT NULL,
-    name character(128) NOT NULL,
+    name varchar(128) NOT NULL,
     PRIMARY KEY (id),
 	UNIQUE (name)
 );
@@ -49,10 +49,10 @@ CREATE TABLE IF NOT EXISTS public.genres_for_books
 CREATE TABLE IF NOT EXISTS public.users
 (
     id bigserial NOT NULL,
-    firstname character(128) NOT NULL,
-    lastname character(128) NOT NULL,
-    middlename character(128) NOT NULL,
-    phone character(20) NOT NULL,
+    firstname varchar(128) NOT NULL,
+    lastname varchar(128) NOT NULL,
+    middlename varchar(128) NOT NULL,
+    phone varchar(20) NOT NULL,
     PRIMARY KEY (id)
 );
 
