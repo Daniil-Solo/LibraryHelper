@@ -71,7 +71,7 @@ ALTER TABLE IF EXISTS public.authors_for_books
     ADD FOREIGN KEY (author_id)
     REFERENCES public.authors (id) MATCH SIMPLE
     ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     NOT VALID;
 
 
@@ -79,7 +79,7 @@ ALTER TABLE IF EXISTS public.authors_for_books
     ADD FOREIGN KEY (book_id)
     REFERENCES public.books (id) MATCH SIMPLE
     ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     NOT VALID;
 
 
@@ -87,7 +87,7 @@ ALTER TABLE IF EXISTS public.genres_for_books
     ADD FOREIGN KEY (genre_id)
     REFERENCES public.genres (id) MATCH SIMPLE
     ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     NOT VALID;
 
 
@@ -95,7 +95,7 @@ ALTER TABLE IF EXISTS public.genres_for_books
     ADD FOREIGN KEY (book_id)
     REFERENCES public.books (id) MATCH SIMPLE
     ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     NOT VALID;
 
 
@@ -103,7 +103,7 @@ ALTER TABLE IF EXISTS public.books_for_users
     ADD FOREIGN KEY (user_id)
     REFERENCES public.users (id) MATCH SIMPLE
     ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     NOT VALID;
 
 
@@ -111,7 +111,7 @@ ALTER TABLE IF EXISTS public.books_for_users
     ADD FOREIGN KEY (book_id)
     REFERENCES public.books (id) MATCH SIMPLE
     ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     NOT VALID;
 
 END;
