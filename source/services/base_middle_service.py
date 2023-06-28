@@ -1,0 +1,27 @@
+import dataclasses
+from services.base_service import BaseModelService
+
+
+class BaseMiddleModelService(BaseModelService):
+    def join(self, target_service: BaseModelService, join_field: str, **condition):
+        """
+        Выполняет соединение таблиц self.TABLE_NAME и target_service.TABLE_NAME через условия
+        {target_service.TABLE_NAME}.id = {self.TABLE_NAME}.join_field и
+        {self.TABLE_NAME}.condition_key = condition_value
+        """
+        field_names = [field.name for field in dataclasses.fields(target_service.OUT_MODEL)]
+        where_field = list(condition.keys())[0]
+        value = list(condition.values())[0]
+
+        query = f"""
+            select {','.join([f'{target_service.TABLE_NAME}.{field_name}' for field_name in field_names])}
+            from {target_service.TABLE_NAME}
+            inner join {self.TABLE_NAME}
+            on {target_service.TABLE_NAME}.id = {self.TABLE_NAME}.{join_field}
+            where {self.TABLE_NAME}.{where_field} = {value}
+        """
+
+        with self.conn.cursor() as cursor:
+            cursor.execute(query)
+            rows = cursor.fetchall()
+        return [target_service.OUT_MODEL(*row) for row in rows]
