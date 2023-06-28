@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from services.base_service import BaseModelService
 from services.book_genre_service import BookGenreService, InBookGenre, OutBookGenre
 from services.genre_service import GenreService, OutGenre
+from services.author_service import AuthorService, OutAuthor
+from services.book_author_service import BookAuthorService, InBookAuthor, OutBookAuthor
 
 
 @dataclass
@@ -37,3 +39,16 @@ class BookService(BaseModelService):
     def remove_genre(self, book_genre_id: int) -> None:
         bgs = BookGenreService(self.conn)
         bgs.delete(book_genre_id)
+
+    def get_authors(self, author_id: int) -> list[OutAuthor]:
+        bas = BookAuthorService(self.conn)
+        return bas.join(AuthorService, 'author_id', author_id=author_id)
+
+    def add_author(self, book_id: int, author_id: int) -> OutBookAuthor:
+        bas = BookAuthorService(self.conn)
+        book_author = bas.create(InBookAuthor(book_id=book_id, author_id=author_id))
+        return book_author
+
+    def remove_author(self, book_author_id: int) -> None:
+        bas = BookAuthorService(self.conn)
+        bas.delete(book_author_id)
