@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS public.users
     lastname varchar(128) NOT NULL,
     middlename varchar(128) NOT NULL,
     phone varchar(20) NOT NULL,
+    register_date date,
     PRIMARY KEY (id)
 );
 
