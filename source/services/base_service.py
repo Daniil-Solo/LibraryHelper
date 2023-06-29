@@ -1,3 +1,4 @@
+import dataclasses
 from abc import ABC
 
 
@@ -59,3 +60,22 @@ class BaseModelService(ABC):
             cursor.execute(query, fields)
         self.conn.commit()
         return data
+
+    def get_list_by_search_conditions(self, **conditions) -> list[OUT_MODEL]:
+        field_names = [field.name for field in dataclasses.fields(self.OUT_MODEL)]
+
+        query = f"select {','.join([f'{field_name}' for field_name in field_names])}\n"
+        query += f"from {self.TABLE_NAME}\n"
+
+        if conditions:
+            text_conditions = []
+            for (condition_field_name, value) in conditions.items():
+                if value.strip():
+                    text_conditions.append(f"{condition_field_name} ilike '%{value.strip()}%'")
+            if text_conditions:
+                query += "where " + " and ".join(text_conditions)
+
+        with self.conn.cursor() as cursor:
+            cursor.execute(query)
+            rows = cursor.fetchall()
+        return [self.OUT_MODEL(*row) for row in rows]
