@@ -25,3 +25,14 @@ class BaseMiddleModelService(BaseModelService):
             cursor.execute(query)
             rows = cursor.fetchall()
         return [target_service.OUT_MODEL(*row) for row in rows]
+
+    def delete(self, **conditions) -> None:
+        """
+        Удаляет запись из таблицы TABLE_NAME, у которой condition1_key=condition1_value
+        """
+        query = f"delete from {self.TABLE_NAME}\n"
+        query += f"where {' and '.join(f'{field}={value}' for (field, value) in conditions.items())}"
+
+        with self.conn.cursor() as cursor:
+            cursor.execute(query)
+        self.conn.commit()
