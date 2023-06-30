@@ -24,8 +24,13 @@ class BookService(BaseModelService):
     IN_MODEL = InBook
     OUT_MODEL = OutBook
 
-    def get_default_fields(self) -> dict:
+    @staticmethod
+    def get_default_fields() -> dict:
         return dict(register_date=datetime.date.today())
+
+    @staticmethod
+    def get_order_by() -> str:
+        return "name"
 
     def get_genres(self, book_id: int) -> list[OutGenre]:
         bgs = BookGenreService(self.conn)

@@ -17,3 +17,7 @@ class GenreService(BaseModelService):
     TABLE_NAME = 'genres'
     IN_MODEL = InGenre
     OUT_MODEL = OutGenre
+
+    @staticmethod
+    def get_order_by() -> str:
+        return "name"

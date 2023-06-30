@@ -22,5 +22,10 @@ class UserService(BaseModelService):
     IN_MODEL = InUser
     OUT_MODEL = OutUser
 
-    def get_default_fields(self) -> dict:
+    @staticmethod
+    def get_default_fields() -> dict:
         return dict(register_date=datetime.date.today())
+
+    @staticmethod
+    def get_order_by() -> str:
+        return "lastname, firstname, middlename"
