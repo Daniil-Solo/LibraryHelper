@@ -41,19 +41,19 @@ class BookService(BaseModelService):
         book_genre = bgs.create(InBookGenre(book_id=book_id, genre_id=genre_id))
         return book_genre
 
-    def remove_genre(self, book_genre_id: int) -> None:
+    def remove_genre(self, book_id: int, genre_id: int) -> None:
         bgs = BookGenreService(self.conn)
-        bgs.delete(book_genre_id)
+        bgs.delete(book_id=book_id, genre_id=genre_id)
 
-    def get_authors(self, author_id: int) -> list[OutAuthor]:
+    def get_authors(self, book_id: int) -> list[OutAuthor]:
         bas = BookAuthorService(self.conn)
-        return bas.join(AuthorService, 'author_id', author_id=author_id)
+        return bas.join(AuthorService, 'author_id', book_id=book_id)
 
     def add_author(self, book_id: int, author_id: int) -> OutBookAuthor:
         bas = BookAuthorService(self.conn)
         book_author = bas.create(InBookAuthor(book_id=book_id, author_id=author_id))
         return book_author
 
-    def remove_author(self, book_author_id: int) -> None:
+    def remove_author(self, book_id: int, author_id: int) -> None:
         bas = BookAuthorService(self.conn)
-        bas.delete(book_author_id)
+        bas.delete(book_id=book_id, author_id=author_id)
