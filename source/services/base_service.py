@@ -14,6 +14,10 @@ class BaseModelService(ABC):
     def get_default_fields() -> dict:
         return {}
 
+    @staticmethod
+    def get_order_by() -> str:
+        return ""
+
     def create(self, data: IN_MODEL) -> OUT_MODEL:
         """
         Создает новую запись в таблице TABLE_NAME c данными из полей data и полей по умолчанию
@@ -73,7 +77,11 @@ class BaseModelService(ABC):
                 if value.strip():
                     text_conditions.append(f"{condition_field_name} ilike '%{value.strip()}%'")
             if text_conditions:
-                query += "where " + " and ".join(text_conditions)
+                query += "where " + " and ".join(text_conditions) + "\n"
+
+        order_by_query_part = self.get_order_by()
+        if order_by_query_part:
+            query += "order by " + order_by_query_part
 
         with self.conn.cursor() as cursor:
             cursor.execute(query)
