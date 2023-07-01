@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 from dataclasses import dataclass
 
@@ -6,6 +7,7 @@ from services.book_genre_service import BookGenreService, InBookGenre, OutBookGe
 from services.genre_service import GenreService, OutGenre
 from services.author_service import AuthorService, OutAuthor
 from services.book_author_service import BookAuthorService, InBookAuthor, OutBookAuthor
+from services.user_book_service import UserBookService
 
 
 @dataclass
@@ -57,3 +59,35 @@ class BookService(BaseModelService):
     def remove_author(self, book_id: int, author_id: int) -> None:
         bas = BookAuthorService(self.conn)
         bas.delete(book_id=book_id, author_id=author_id)
+
+    def get_free_books(self) -> list[OutBook]:
+        field_names = [field.name for field in dataclasses.fields(self.OUT_MODEL)]
+        query = f"""
+            select {','.join([f'{field_name}' for field_name in field_names])}\n
+            from books
+            where id not in (
+                select bfu.book_id
+                from books_for_users bfu
+                where bfu.real_return_date is NULL
+            )
+            {"order by " + self.get_order_by() if self.get_order_by() else ""}
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(query)
+            rows = cursor.fetchall()
+        return [self.OUT_MODEL(*row) for row in rows]
+
+    def get_books_on_user_hands(self, user_id: int) -> list[OutBook]:
+        field_names = [field.name for field in dataclasses.fields(self.OUT_MODEL)]
+        query = f"""
+            select {','.join([f'b.{field_name}' for field_name in field_names])}\n
+            from books b
+            inner join books_for_users bfu
+            on b.id = bfu.book_id
+            where bfu.real_return_date is NULL and bfu.user_id = {user_id}
+            {"order by " + self.get_order_by() if self.get_order_by() else ""}
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(query)
+            rows = cursor.fetchall()
+        return [self.OUT_MODEL(*row) for row in rows]
