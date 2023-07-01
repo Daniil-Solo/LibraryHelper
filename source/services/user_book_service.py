@@ -27,3 +27,14 @@ class UserBookService(BaseMiddleModelService):
             "take_date": datetime.date.today(),
             "real_return_date": None
         }
+
+    def update_real_return_date(self, user_id: int, book_id_list: list[int], real_return_date: datetime.date) -> None:
+        query = f"""
+            update {self.TABLE_NAME}
+            set
+                real_return_date = %s
+            where user_id = {user_id} and book_id in ({','.join(map(str, book_id_list))})
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(query, (real_return_date, ))
+        self.conn.commit()
