@@ -29,8 +29,8 @@ class Report(FPDF):
         self.add_fonts()
 
     def add_fonts(self) -> None:
-        self.add_font(family="Roboto", fname="ui/fonts/Roboto-Regular.ttf")
-        self.add_font(family="Roboto", style="B", fname="ui/fonts/Roboto-Bold.ttf")
+        self.add_font(family="Roboto", fname="reports/fonts/Roboto-Regular.ttf")
+        self.add_font(family="Roboto", style="B", fname="reports/fonts/Roboto-Bold.ttf")
         self.set_font(family="Roboto", style="B", size=15)
 
     def add_document_heading(self, heading_text: str):
