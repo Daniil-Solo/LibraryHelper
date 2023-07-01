@@ -19,6 +19,8 @@ class BaseMiddleModelService(BaseModelService):
             inner join {self.TABLE_NAME}
             on {target_service.TABLE_NAME}.id = {self.TABLE_NAME}.{join_field}
             where {self.TABLE_NAME}.{where_field} = {value}
+            {"order by " + target_service.TABLE_NAME + "." + target_service.get_order_by() 
+                if target_service.get_order_by() else ""}
         """
 
         with self.conn.cursor() as cursor:
