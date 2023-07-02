@@ -7,6 +7,9 @@ from time import time
 
 
 class ReportGenerator:
+    """
+    Генерирует отчет по переданным данным и сохраняет его по пути dir_path
+    """
     def __init__(self, dir_path: str):
         self.dir_path = dir_path
 
@@ -25,6 +28,9 @@ class ReportGenerator:
 
 
 class Report(FPDF):
+    """
+    Создает pdf-документ с заголовком и таблицей
+    """
     def __init__(self):
         super().__init__()
         self.add_page()

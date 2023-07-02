@@ -7,6 +7,9 @@ from psycopg2 import errors
 
 
 class BaseModelService(ABC):
+    """
+    Обеспечивает создание и выполнение простых sql-запросов на одной таблице
+    """
     TABLE_NAME = None
     IN_MODEL = None
     OUT_MODEL = None
@@ -78,6 +81,9 @@ class BaseModelService(ABC):
             raise UniqueException(e)
 
     def get_list_by_search_conditions(self, **conditions) -> list[OUT_MODEL]:
+        """
+        Возвращает записи таблицы TABLE_NAME по условиям фильтрации вида: condition_key=condition_value
+        """
         field_names = [field.name for field in dataclasses.fields(self.OUT_MODEL)]
 
         query = f"select {','.join([f'{field_name}' for field_name in field_names])}\n"

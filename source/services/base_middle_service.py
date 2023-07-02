@@ -3,6 +3,10 @@ from services.base_service import BaseModelService
 
 
 class BaseMiddleModelService(BaseModelService):
+    """
+    Обеспечивает работу с промежуточной таблицей для более сложных запросов
+    """
+
     def join(self, target_service: BaseModelService, join_field: str, **condition):
         """
         Выполняет соединение таблиц self.TABLE_NAME и target_service.TABLE_NAME через условия
