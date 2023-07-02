@@ -1,5 +1,9 @@
 import dataclasses
 from abc import ABC
+from services.exceptions import UniqueException
+
+from psycopg2.errorcodes import UNIQUE_VIOLATION
+from psycopg2 import errors
 
 
 class BaseModelService(ABC):
@@ -29,12 +33,16 @@ class BaseModelService(ABC):
         query += f"values({','.join([f'%({field_name})s' for field_name in field_names])})\n"
         query += "returning id;"
 
-        with self.conn.cursor() as cursor:
-            cursor.execute(query, fields)
-            data_id = cursor.fetchone()[0]
-        out_data = self.OUT_MODEL(id=data_id, **fields)
-        self.conn.commit()
-        return out_data
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute(query, fields)
+                data_id = cursor.fetchone()[0]
+            out_data = self.OUT_MODEL(id=data_id, **fields)
+            self.conn.commit()
+            return out_data
+        except errors.lookup(UNIQUE_VIOLATION) as e:
+            self.conn.rollback()
+            raise UniqueException(e)
 
     def delete(self, data_id: int) -> None:
         """
@@ -60,10 +68,14 @@ class BaseModelService(ABC):
         query += ',\n'.join([f'{field_name}=%({field_name})s' for field_name in field_names])
         query += "\nwhere id=%(id)s;"
 
-        with self.conn.cursor() as cursor:
-            cursor.execute(query, fields)
-        self.conn.commit()
-        return data
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute(query, fields)
+            self.conn.commit()
+            return data
+        except errors.lookup(UNIQUE_VIOLATION) as e:
+            self.conn.rollback()
+            raise UniqueException(e)
 
     def get_list_by_search_conditions(self, **conditions) -> list[OUT_MODEL]:
         field_names = [field.name for field in dataclasses.fields(self.OUT_MODEL)]
