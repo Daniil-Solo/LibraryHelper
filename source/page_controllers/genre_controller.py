@@ -5,6 +5,9 @@ from services.exceptions import UniqueException
 
 
 class GenreController:
+    """
+    Контроллер страницы для работы с жанрами в приложении
+    """
     def __init__(self, application, ui):
         self.application = application
         self.ui = ui
@@ -87,40 +90,46 @@ class GenreController:
         try:
             genre_service = GenreService(self.application.conn)
             if self.is_new_genre_mode:
-                genre = InGenre(
-                    name=new_name
-                )
-                try:
-                    genre_service.create(genre)
-                except UniqueException:
-                    QMessageBox.critical(
-                        self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
-                    )
-                    return
-                self.clear_genre_form()
-                QMessageBox.information(
-                    self.application, "Создание завершено", "Жанр успешно создан", QMessageBox.Ok
-                )
+                self.save_new_genre(genre_service, new_name)
             else:
-                self.current_genre.name = new_name
-                try:
-                    genre_service.update(self.current_genre)
-                except UniqueException:
-                    QMessageBox.critical(
-                        self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
-                    )
-                    return
-                for (index, genre) in enumerate(self.genres):
-                    if genre.id == self.current_genre.id:
-                        self.genres[index] = self.current_genre
-                        break
-                self.update_genre_list()
-
-                self.clear_genre_form()
-                self.current_genre = None
-                self.start_new_mode()
-                QMessageBox.information(
-                    self.application, "Редактирование завершено", "Данные о жанре успешно сохранены", QMessageBox.Ok
-                )
+                self.save_updated_genre(genre_service, new_name)
         except ConnectionError:
             return
+
+    def save_new_genre(self, genre_service, new_name):
+        genre = InGenre(
+            name=new_name
+        )
+        try:
+            genre_service.create(genre)
+        except UniqueException:
+            QMessageBox.critical(
+                self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
+            )
+            return
+        self.clear_genre_form()
+        QMessageBox.information(
+            self.application, "Создание завершено", "Жанр успешно создан", QMessageBox.Ok
+        )
+
+    def save_updated_genre(self, genre_service, new_name):
+        self.current_genre.name = new_name
+        try:
+            genre_service.update(self.current_genre)
+        except UniqueException:
+            QMessageBox.critical(
+                self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
+            )
+            return
+        for (index, genre) in enumerate(self.genres):
+            if genre.id == self.current_genre.id:
+                self.genres[index] = self.current_genre
+                break
+        self.update_genre_list()
+
+        self.clear_genre_form()
+        self.current_genre = None
+        self.start_new_mode()
+        QMessageBox.information(
+            self.application, "Редактирование завершено", "Данные о жанре успешно сохранены", QMessageBox.Ok
+        )

@@ -4,6 +4,9 @@ from PyQt5.QtWidgets import QMessageBox
 
 
 class ConnectionController:
+    """
+    Контроллер страницы для работы с подключением к БД в приложении
+    """
     def __init__(self, application, ui, config):
         self.application = application
         self.ui = ui

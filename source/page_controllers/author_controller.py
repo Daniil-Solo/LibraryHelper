@@ -5,6 +5,9 @@ from services.exceptions import UniqueException
 
 
 class AuthorController:
+    """
+    Контроллер страницы для работы с авторами в приложении
+    """
     def __init__(self, application, ui):
         self.application = application
         self.ui = ui
@@ -87,40 +90,46 @@ class AuthorController:
         try:
             author_service = AuthorService(self.application.conn)
             if self.is_new_author_mode:
-                author = InAuthor(
-                    full_name=new_full_name
-                )
-                try:
-                    author_service.create(author)
-                except UniqueException:
-                    QMessageBox.critical(
-                        self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
-                    )
-                    return
-                self.clear_author_form()
-                QMessageBox.information(
-                    self.application, "Создание завершено", "Автор успешно создан", QMessageBox.Ok
-                )
+                self.save_new_author(author_service, new_full_name)
             else:
-                self.current_author.full_name = new_full_name
-                try:
-                    author_service.update(self.current_author)
-                except UniqueException:
-                    QMessageBox.critical(
-                        self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
-                    )
-                    return
-                for (index, author) in enumerate(self.authors):
-                    if author.id == self.current_author.id:
-                        self.authors[index] = self.current_author
-                        break
-                self.update_author_list()
-
-                self.clear_author_form()
-                self.current_author = None
-                self.start_new_mode()
-                QMessageBox.information(
-                    self.application, "Редактирование завершено", "Данные об авторе успешно сохранены", QMessageBox.Ok
-                )
+                self.save_changed_author(author_service, new_full_name)
         except ConnectionError:
             return
+
+    def save_new_author(self, author_service, new_full_name):
+        author = InAuthor(
+            full_name=new_full_name
+        )
+        try:
+            author_service.create(author)
+        except UniqueException:
+            QMessageBox.critical(
+                self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
+            )
+            return
+        self.clear_author_form()
+        QMessageBox.information(
+            self.application, "Создание завершено", "Автор успешно создан", QMessageBox.Ok
+        )
+
+    def save_changed_author(self, author_service, new_full_name):
+        self.current_author.full_name = new_full_name
+        try:
+            author_service.update(self.current_author)
+        except UniqueException:
+            QMessageBox.critical(
+                self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
+            )
+            return
+        for (index, author) in enumerate(self.authors):
+            if author.id == self.current_author.id:
+                self.authors[index] = self.current_author
+                break
+        self.update_author_list()
+
+        self.clear_author_form()
+        self.current_author = None
+        self.start_new_mode()
+        QMessageBox.information(
+            self.application, "Редактирование завершено", "Данные об авторе успешно сохранены", QMessageBox.Ok
+        )

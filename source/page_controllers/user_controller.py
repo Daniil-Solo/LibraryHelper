@@ -4,6 +4,9 @@ from services.user_service import UserService, InUser
 
 
 class UserController:
+    """
+    Контроллер страницы для работы с пользователями в приложении
+    """
     def __init__(self, application, ui):
         self.application = application
         self.ui = ui
@@ -112,36 +115,43 @@ class UserController:
         try:
             user_service = UserService(self.application.conn)
             if self.is_new_user_mode:
-                user = InUser(
-                    firstname=new_firstname,
-                    lastname=new_lastname,
-                    middlename=new_middlename,
-                    phone=new_phone,
-                )
-
-                user_service.create(user)
-                self.clear_user_form()
-                QMessageBox.information(
-                    self.application, "Создание завершено", "Пользователь успешно создан", QMessageBox.Ok
-                )
+                self.save_new_user(user_service, new_firstname, new_lastname, new_middlename, new_phone)
             else:
-                self.current_user.firstname = new_firstname
-                self.current_user.lastname = new_lastname
-                self.current_user.middlename = new_middlename
-                self.current_user.phone = new_phone
-                user_service.update(self.current_user)
-
-                for (index, user) in enumerate(self.users):
-                    if user.id == self.current_user.id:
-                        self.users[index] = self.current_user
-                        break
-                self.update_user_list()
-
-                self.clear_user_form()
-                self.current_user = None
-                self.start_new_mode()
-                QMessageBox.information(
-                    self.application, "Редактирование завершено", "Данные о пользователе успешно сохранены", QMessageBox.Ok
-                )
+                self.save_updated_user(user_service, new_firstname, new_lastname, new_middlename, new_phone)
         except ConnectionError:
             return
+
+    def save_new_user(self, user_service, new_firstname, new_lastname, new_middlename, new_phone):
+        user = InUser(
+            firstname=new_firstname,
+            lastname=new_lastname,
+            middlename=new_middlename,
+            phone=new_phone,
+        )
+
+        user_service.create(user)
+        self.clear_user_form()
+        QMessageBox.information(
+            self.application, "Создание завершено", "Пользователь успешно создан", QMessageBox.Ok
+        )
+
+    def save_updated_user(self, user_service, new_firstname, new_lastname, new_middlename, new_phone):
+        self.current_user.firstname = new_firstname
+        self.current_user.lastname = new_lastname
+        self.current_user.middlename = new_middlename
+        self.current_user.phone = new_phone
+        user_service.update(self.current_user)
+
+        for (index, user) in enumerate(self.users):
+            if user.id == self.current_user.id:
+                self.users[index] = self.current_user
+                break
+        self.update_user_list()
+
+        self.clear_user_form()
+        self.current_user = None
+        self.start_new_mode()
+        QMessageBox.information(
+            self.application, "Редактирование завершено",
+            "Данные о пользователе успешно сохранены", QMessageBox.Ok
+        )

@@ -6,6 +6,9 @@ from reports.report_data import *
 
 
 class ReportController:
+    """
+    Контроллер страницы для работы с отчетами в приложении
+    """
     def __init__(self, application, ui, config):
         self.application = application
         self.ui = ui

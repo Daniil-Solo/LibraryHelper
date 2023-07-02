@@ -7,6 +7,9 @@ from services.genre_service import GenreService
 
 
 class BookController:
+    """
+    Контроллер страницы для работы с книгами в приложении
+    """
     def __init__(self, application, ui):
         self.application = application
         self.ui = ui
@@ -90,8 +93,7 @@ class BookController:
             )
             return
         index = self.ui.genreBookList.currentRow()
-        deleting_genre = self.current_book_genres[index]
-        self.current_book_genres = list(filter(lambda user: user.id != deleting_genre.id, self.current_book_genres))
+        self.current_book_genres = self.current_book_genres[:index] + self.current_book_genres[index+1:]
         self.update_book_genre_list()
 
     def search_author(self):
@@ -133,8 +135,7 @@ class BookController:
             )
             return
         index = self.ui.authorBookList.currentRow()
-        deleting_author = self.current_book_authors[index]
-        self.current_book_authors = list(filter(lambda user: user.id != deleting_author.id, self.current_book_authors))
+        self.current_book_authors = self.current_book_authors[:index] + self.current_book_authors[index+1:]
         self.update_book_author_list()
 
     def clear_search_book_fields(self):
@@ -228,55 +229,61 @@ class BookController:
         try:
             book_service = BookService(self.application.conn)
             if self.is_new_book_mode:
-                try:
-                    book = book_service.create(InBook(name=new_name))
-                except UniqueException:
-                    QMessageBox.critical(
-                        self.application, "Ошибка", "Книга с таким названием уже существует", QMessageBox.Ok
-                    )
-                    return
-                for genre in self.current_book_genres:
-                    book_service.add_genre(book.id, genre.id)
-                for author in self.current_book_authors:
-                    book_service.add_author(book.id, author.id)
-                self.clear_book_form()
-                QMessageBox.information(
-                    self.application, "Создание завершено", "Книга успешно создана", QMessageBox.Ok
-                )
+                self.save_new_book(book_service, new_name)
             else:
-                self.current_book.name = new_name
-                try:
-                    self.book_service.update(self.current_book)
-                except UniqueException:
-                    QMessageBox.critical(
-                        self.application, "Ошибка", "Книга с таким названием уже существует", QMessageBox.Ok
-                    )
-                    return
-                print(self.current_book_authors, self.old_book_authors)
-                for author in self.current_book_authors:
-                    if author not in self.old_book_authors:
-                        book_service.add_author(self.current_book.id, author.id)
-                for author in self.old_book_authors:
-                    if author not in self.current_book_authors:
-                        book_service.remove_author(self.current_book.id, author.id)
-                for genre in self.current_book_genres:
-                    if genre not in self.old_book_genres:
-                        book_service.add_genre(self.current_book.id, genre.id)
-                for genre in self.old_book_genres:
-                    if genre not in self.current_book_genres:
-                        book_service.remove_genre(self.current_book.id, genre.id)
-
-                for (index, book) in enumerate(self.books):
-                    if book.id == self.current_book.id:
-                        self.books[index] = self.current_book
-                        break
-                self.update_book_list()
-
-                self.clear_book_form()
-                self.current_book = None
-                self.start_new_mode()
-                QMessageBox.information(
-                    self.application, "Редактирование завершено", "Данные о книге успешно сохранены", QMessageBox.Ok
-                )
+                self.save_updated_book(book_service, new_name)
         except ConnectionError:
             return
+
+    def save_new_book(self, book_service, new_name):
+        try:
+            book = book_service.create(InBook(name=new_name))
+        except UniqueException:
+            QMessageBox.critical(
+                self.application, "Ошибка", "Книга с таким названием уже существует", QMessageBox.Ok
+            )
+            return
+        for genre in self.current_book_genres:
+            book_service.add_genre(book.id, genre.id)
+        for author in self.current_book_authors:
+            book_service.add_author(book.id, author.id)
+        self.clear_book_form()
+        QMessageBox.information(
+            self.application, "Создание завершено", "Книга успешно создана", QMessageBox.Ok
+        )
+
+    def save_updated_book(self, book_service, new_name):
+        self.current_book.name = new_name
+        try:
+            book_service.update(self.current_book)
+        except UniqueException:
+            QMessageBox.critical(
+                self.application, "Ошибка", "Книга с таким названием уже существует", QMessageBox.Ok
+            )
+            return
+        print(self.current_book_authors, self.old_book_authors)
+        for author in self.current_book_authors:
+            if author not in self.old_book_authors:
+                book_service.add_author(self.current_book.id, author.id)
+        for author in self.old_book_authors:
+            if author not in self.current_book_authors:
+                book_service.remove_author(self.current_book.id, author.id)
+        for genre in self.current_book_genres:
+            if genre not in self.old_book_genres:
+                book_service.add_genre(self.current_book.id, genre.id)
+        for genre in self.old_book_genres:
+            if genre not in self.current_book_genres:
+                book_service.remove_genre(self.current_book.id, genre.id)
+
+        for (index, book) in enumerate(self.books):
+            if book.id == self.current_book.id:
+                self.books[index] = self.current_book
+                break
+        self.update_book_list()
+
+        self.clear_book_form()
+        self.current_book = None
+        self.start_new_mode()
+        QMessageBox.information(
+            self.application, "Редактирование завершено", "Данные о книге успешно сохранены", QMessageBox.Ok
+        )

@@ -8,6 +8,9 @@ from services.user_book_service import UserBookService, InUserBook
 
 
 class TakeReturnController:
+    """
+    Контроллер страницы для работы с фактами взятия/возвращения в приложении
+    """
     def __init__(self, application, ui):
         self.application = application
         self.ui = ui
@@ -155,28 +158,34 @@ class TakeReturnController:
         try:
             user_book_service = UserBookService(self.application.conn)
             if self.is_take_fact:
-                if self.ui.expectedReturnDate.date() <= QDate.currentDate():
-                    QMessageBox.critical(
-                        self.application, "Ошибка", "Дата возвращения должна быть позже сегодняшней даты", QMessageBox.Ok
-                    )
-                    return
-                expected_return_date = self.ui.expectedReturnDate.date().toPyDate()
-                for book in self.books:
-                    user_book_service.create(
-                        InUserBook(user_id=self.current_user.id, book_id=book.id, expected_return_date=expected_return_date)
-                    )
-                QMessageBox.information(
-                    self.application, "Создание завершено", "Факт выдачи успешно создан", QMessageBox.Ok
-                )
+                self.save_take_fact(user_book_service)
             else:
-                current_date = datetime.date.today()
-                user_book_service.update_real_return_date(
-                    user_id=self.current_user.id, book_id_list=[book.id for book in self.books],
-                    real_return_date=current_date
-                )
-                QMessageBox.information(
-                    self.application, "Создание завершено", "Факт возвращения успешно создан", QMessageBox.Ok
-                )
+                self.save_return_fact(user_book_service)
             self.clear_fact_fields()
         except ConnectionError:
             return
+
+    def save_take_fact(self, user_book_service):
+        if self.ui.expectedReturnDate.date() <= QDate.currentDate():
+            QMessageBox.critical(
+                self.application, "Ошибка", "Дата возвращения должна быть позже сегодняшней даты", QMessageBox.Ok
+            )
+            return
+        expected_return_date = self.ui.expectedReturnDate.date().toPyDate()
+        for book in self.books:
+            user_book_service.create(
+                InUserBook(user_id=self.current_user.id, book_id=book.id, expected_return_date=expected_return_date)
+            )
+        QMessageBox.information(
+            self.application, "Создание завершено", "Факт выдачи успешно создан", QMessageBox.Ok
+        )
+
+    def save_return_fact(self, user_book_service):
+        current_date = datetime.date.today()
+        user_book_service.update_real_return_date(
+            user_id=self.current_user.id, book_id_list=[book.id for book in self.books],
+            real_return_date=current_date
+        )
+        QMessageBox.information(
+            self.application, "Создание завершено", "Факт возвращения успешно создан", QMessageBox.Ok
+        )
