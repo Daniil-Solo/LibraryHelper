@@ -3,14 +3,13 @@ from PyQt5.QtWidgets import QMessageBox
 from services.genre_service import GenreService, InGenre
 from services.exceptions import UniqueException
 
+
 class GenreController:
-    def __init__(self, application, ui, conn):
+    def __init__(self, application, ui):
         self.application = application
         self.ui = ui
-        self.conn = conn
         self.bind_methods()
 
-        self.genre_service = GenreService(self.conn)
         self.genres = []
         self.current_genre = None
         self.is_new_genre_mode = None
@@ -36,10 +35,14 @@ class GenreController:
         self.ui.searchGenreLineEdit.setText("")
 
     def search_genre(self):
-        self.genres = self.genre_service.get_list_by_search_conditions(
-            name=self.ui.searchGenreLineEdit.text()
-        )
-        self.update_genre_list()
+        try:
+            genre_service = GenreService(self.application.conn)
+            self.genres = genre_service.get_list_by_search_conditions(
+                name=self.ui.searchGenreLineEdit.text()
+            )
+            self.update_genre_list()
+        except ConnectionError:
+            return
 
     def update_genre_list(self):
         self.ui.genreList.clear()
@@ -66,50 +69,58 @@ class GenreController:
         self.ui.genreLineEdit.setText(self.current_genre.name)
 
     def delete_genre(self):
-        self.genre_service.delete(self.current_genre.id)
-        self.genres = list(filter(lambda genre: genre.id != self.current_genre.id, self.genres))
-        self.update_genre_list()
-        self.current_genre = None
-        self.clear_genre_form()
-        QMessageBox.information(
-            self.application, "Удаление завершено", "Жанр успешно удален", QMessageBox.Ok
-        )
+        try:
+            genre_service = GenreService(self.application.conn)
+            genre_service.delete(self.current_genre.id)
+            self.genres = list(filter(lambda genre: genre.id != self.current_genre.id, self.genres))
+            self.update_genre_list()
+            self.current_genre = None
+            self.clear_genre_form()
+            QMessageBox.information(
+                self.application, "Удаление завершено", "Жанр успешно удален", QMessageBox.Ok
+            )
+        except ConnectionError:
+            return
 
     def save_genre(self):
         new_name = self.ui.genreLineEdit.text()
-        if self.is_new_genre_mode:
-            genre = InGenre(
-                name=new_name
-            )
-            try:
-                self.genre_service.create(genre)
-            except UniqueException:
-                QMessageBox.critical(
-                    self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
+        try:
+            genre_service = GenreService(self.application.conn)
+            if self.is_new_genre_mode:
+                genre = InGenre(
+                    name=new_name
                 )
-                return
-            self.clear_genre_form()
-            QMessageBox.information(
-                self.application, "Создание завершено", "Жанр успешно создан", QMessageBox.Ok
-            )
-        else:
-            self.current_genre.name = new_name
-            try:
-                self.genre_service.update(self.current_genre)
-            except UniqueException:
-                QMessageBox.critical(
-                    self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
+                try:
+                    genre_service.create(genre)
+                except UniqueException:
+                    QMessageBox.critical(
+                        self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
+                    )
+                    return
+                self.clear_genre_form()
+                QMessageBox.information(
+                    self.application, "Создание завершено", "Жанр успешно создан", QMessageBox.Ok
                 )
-                return
-            for (index, genre) in enumerate(self.genres):
-                if genre.id == self.current_genre.id:
-                    self.genres[index] = self.current_genre
-                    break
-            self.update_genre_list()
+            else:
+                self.current_genre.name = new_name
+                try:
+                    genre_service.update(self.current_genre)
+                except UniqueException:
+                    QMessageBox.critical(
+                        self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
+                    )
+                    return
+                for (index, genre) in enumerate(self.genres):
+                    if genre.id == self.current_genre.id:
+                        self.genres[index] = self.current_genre
+                        break
+                self.update_genre_list()
 
-            self.clear_genre_form()
-            self.current_genre = None
-            self.start_new_mode()
-            QMessageBox.information(
-                self.application, "Редактирование завершено", "Данные о жанре успешно сохранены", QMessageBox.Ok
-            )
+                self.clear_genre_form()
+                self.current_genre = None
+                self.start_new_mode()
+                QMessageBox.information(
+                    self.application, "Редактирование завершено", "Данные о жанре успешно сохранены", QMessageBox.Ok
+                )
+        except ConnectionError:
+            return

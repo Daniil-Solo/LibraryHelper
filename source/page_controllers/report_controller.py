@@ -6,12 +6,11 @@ from reports.report_data import *
 
 
 class ReportController:
-    def __init__(self, application, ui, conn):
+    def __init__(self, application, ui, config):
         self.application = application
         self.ui = ui
-        self.conn = conn
-        self.dir_path = application.config.report_dir_path
-        self.report_generator = ReportGenerator(self.dir_path)
+        self.config = config
+        self.report_generator = ReportGenerator(self.config.report_dir_path)
         self.bind_methods()
 
     def bind_methods(self):
@@ -24,18 +23,18 @@ class ReportController:
         self.ui.reportBtn7.clicked.connect(lambda: self._generate_report(**report_7))
         self.ui.reportBtn8.clicked.connect(lambda: self._generate_report(**report_8))
 
-        self.ui.dirPathLineEdit.setText(self.dir_path)
+        self.ui.dirPathLineEdit.setText(self.config.report_dir_path)
         self.ui.saveDirPath.clicked.connect(self.save_dir_path)
 
     def _generate_report(self, title: str, query, headings_cells: list[str]):
-        if not os.path.exists(self.dir_path):
+        if not os.path.exists(self.config.report_dir_path):
             QMessageBox.critical(
                 self.application, "Ошибка ",
                 "Укажите путь до директории для отчетов", QMessageBox.Ok
             )
             return
         try:
-            with self.conn.cursor() as cursor:
+            with self.application.conn.cursor() as cursor:
                 cursor.execute(query)
                 rows = cursor.fetchall()
             file_path = self.report_generator.generate_and_save(title, headings_cells, rows)
@@ -43,13 +42,13 @@ class ReportController:
                 self.application, 'Отчет успешно создан',
                 f'Отчет "{title}" находится по пути:\n {file_path}', QMessageBox.Ok
             )
-        except Exception as ex:
-            print(ex)
+        except ConnectionError:
+            return
 
     def save_dir_path(self):
         new_dir_path = self.application.ui.dirPathLineEdit.text()
         self.report_generator = ReportGenerator(new_dir_path)
-        self.application.config.report_dir_path = new_dir_path
+        self.config.report_dir_path = new_dir_path
         QMessageBox.information(
             self.application, 'Путь успешно сохранен',
             'Путь успешно сохранен', QMessageBox.Ok

@@ -5,13 +5,11 @@ from services.exceptions import UniqueException
 
 
 class AuthorController:
-    def __init__(self, application, ui, conn):
+    def __init__(self, application, ui):
         self.application = application
         self.ui = ui
-        self.conn = conn
         self.bind_methods()
 
-        self.author_service = AuthorService(self.conn)
         self.authors = []
         self.current_author = None
         self.is_new_author_mode = None
@@ -37,10 +35,14 @@ class AuthorController:
         self.ui.searchAuthorLineEdit.setText("")
 
     def search_author(self):
-        self.authors = self.author_service.get_list_by_search_conditions(
-            full_name=self.ui.searchAuthorLineEdit.text()
-        )
-        self.update_author_list()
+        try:
+            author_service = AuthorService(self.application.conn)
+            self.authors = author_service.get_list_by_search_conditions(
+                full_name=self.ui.searchAuthorLineEdit.text()
+            )
+            self.update_author_list()
+        except ConnectionError:
+            return
 
     def update_author_list(self):
         self.ui.authorList.clear()
@@ -67,50 +69,58 @@ class AuthorController:
         self.ui.authorLineEdit.setText(self.current_author.full_name)
 
     def delete_author(self):
-        self.author_service.delete(self.current_author.id)
-        self.authors = list(filter(lambda author: author.id != self.current_author.id, self.authors))
-        self.update_author_list()
-        self.current_author = None
-        self.clear_author_form()
-        QMessageBox.information(
-            self.application, "Удаление завершено", "Автор успешно удален", QMessageBox.Ok
-        )
+        try:
+            author_service = AuthorService(self.application.conn)
+            author_service.delete(self.current_author.id)
+            self.authors = list(filter(lambda author: author.id != self.current_author.id, self.authors))
+            self.update_author_list()
+            self.current_author = None
+            self.clear_author_form()
+            QMessageBox.information(
+                self.application, "Удаление завершено", "Автор успешно удален", QMessageBox.Ok
+            )
+        except ConnectionError:
+            return
 
     def save_author(self):
         new_full_name = self.ui.authorLineEdit.text()
-        if self.is_new_author_mode:
-            author = InAuthor(
-                full_name=new_full_name
-            )
-            try:
-                self.author_service.create(author)
-            except UniqueException:
-                QMessageBox.critical(
-                    self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
+        try:
+            author_service = AuthorService(self.application.conn)
+            if self.is_new_author_mode:
+                author = InAuthor(
+                    full_name=new_full_name
                 )
-                return
-            self.clear_author_form()
-            QMessageBox.information(
-                self.application, "Создание завершено", "Автор успешно создан", QMessageBox.Ok
-            )
-        else:
-            self.current_author.full_name = new_full_name
-            try:
-                self.author_service.update(self.current_author)
-            except UniqueException:
-                QMessageBox.critical(
-                    self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
+                try:
+                    author_service.create(author)
+                except UniqueException:
+                    QMessageBox.critical(
+                        self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
+                    )
+                    return
+                self.clear_author_form()
+                QMessageBox.information(
+                    self.application, "Создание завершено", "Автор успешно создан", QMessageBox.Ok
                 )
-                return
-            for (index, author) in enumerate(self.authors):
-                if author.id == self.current_author.id:
-                    self.authors[index] = self.current_author
-                    break
-            self.update_author_list()
+            else:
+                self.current_author.full_name = new_full_name
+                try:
+                    author_service.update(self.current_author)
+                except UniqueException:
+                    QMessageBox.critical(
+                        self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
+                    )
+                    return
+                for (index, author) in enumerate(self.authors):
+                    if author.id == self.current_author.id:
+                        self.authors[index] = self.current_author
+                        break
+                self.update_author_list()
 
-            self.clear_author_form()
-            self.current_author = None
-            self.start_new_mode()
-            QMessageBox.information(
-                self.application, "Редактирование завершено", "Данные об авторе успешно сохранены", QMessageBox.Ok
-            )
+                self.clear_author_form()
+                self.current_author = None
+                self.start_new_mode()
+                QMessageBox.information(
+                    self.application, "Редактирование завершено", "Данные об авторе успешно сохранены", QMessageBox.Ok
+                )
+        except ConnectionError:
+            return

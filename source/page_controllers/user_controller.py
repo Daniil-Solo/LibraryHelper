@@ -4,13 +4,11 @@ from services.user_service import UserService, InUser
 
 
 class UserController:
-    def __init__(self, application, ui, conn):
+    def __init__(self, application, ui):
         self.application = application
         self.ui = ui
-        self.conn = conn
         self.bind_methods()
 
-        self.user_service = UserService(self.conn)
         self.users = []
         self.current_user = None
         self.is_new_user_mode = None
@@ -38,12 +36,16 @@ class UserController:
         self.ui.searchMiddlenameLineEdit.setText("")
 
     def search_user(self):
-        self.users = self.user_service.get_list_by_search_conditions(
-            firstname=self.ui.searchFirstnameLineEdit.text(),
-            lastname=self.ui.searchLastnameLineEdit.text(),
-            middlename=self.ui.searchMiddlenameLineEdit.text(),
-        )
-        self.update_user_list()
+        try:
+            user_service = UserService(self.application.conn)
+            self.users = user_service.get_list_by_search_conditions(
+                firstname=self.ui.searchFirstnameLineEdit.text(),
+                lastname=self.ui.searchLastnameLineEdit.text(),
+                middlename=self.ui.searchMiddlenameLineEdit.text(),
+            )
+            self.update_user_list()
+        except ConnectionError:
+            return
 
     def update_user_list(self):
         self.ui.userList.clear()
@@ -72,61 +74,74 @@ class UserController:
         self.start_edit_mode()
         index = self.ui.userList.currentRow()
         self.current_user = self.users[index]
-        book_history_list = self.user_service.get_user_book_history(self.current_user.id)
-        self.ui.bookHistoryList.clear()
-        self.ui.bookHistoryList.addItems(
-            [f"{str(book.take_date)} - {book.name} ({'возвращена' if book.is_returned else 'на руках'})"
-             for book in book_history_list]
-        )
-        self.ui.firstnameLineEdit.setText(self.current_user.firstname)
-        self.ui.lastnameLineEdit.setText(self.current_user.lastname)
-        self.ui.middlenameLineEdit.setText(self.current_user.middlename)
-        self.ui.phoneLineEdit.setText(self.current_user.phone)
-        self.ui.registerDateLabel.setText(str(self.current_user.register_date))
+        try:
+            user_service = UserService(self.application.conn)
+            book_history_list = user_service.get_user_book_history(self.current_user.id)
+            self.ui.bookHistoryList.clear()
+            self.ui.bookHistoryList.addItems(
+                [f"{str(book.take_date)} - {book.name} ({'возвращена' if book.is_returned else 'на руках'})"
+                 for book in book_history_list]
+            )
+            self.ui.firstnameLineEdit.setText(self.current_user.firstname)
+            self.ui.lastnameLineEdit.setText(self.current_user.lastname)
+            self.ui.middlenameLineEdit.setText(self.current_user.middlename)
+            self.ui.phoneLineEdit.setText(self.current_user.phone)
+            self.ui.registerDateLabel.setText(str(self.current_user.register_date))
+        except ConnectionError:
+            return
 
     def delete_user(self):
-        self.user_service.delete(self.current_user.id)
-        self.users = list(filter(lambda user: user.id != self.current_user.id, self.users))
-        self.update_user_list()
-        self.current_user = None
-        self.clear_user_form()
-        QMessageBox.information(
-            self.application, "Удаление завершено", "Пользователь успешно удален", QMessageBox.Ok
-        )
+        try:
+            user_service = UserService(self.application.conn)
+            user_service.delete(self.current_user.id)
+            self.users = list(filter(lambda user: user.id != self.current_user.id, self.users))
+            self.update_user_list()
+            self.current_user = None
+            self.clear_user_form()
+            QMessageBox.information(
+                self.application, "Удаление завершено", "Пользователь успешно удален", QMessageBox.Ok
+            )
+        except ConnectionError:
+            return
 
     def save_user(self):
         new_firstname = self.ui.firstnameLineEdit.text()
         new_lastname = self.ui.lastnameLineEdit.text()
         new_middlename = self.ui.middlenameLineEdit.text()
         new_phone = self.ui.phoneLineEdit.text()
-        if self.is_new_user_mode:
-            user = InUser(
-                firstname=new_firstname,
-                lastname=new_lastname,
-                middlename=new_middlename,
-                phone=new_phone,
-            )
-            self.user_service.create(user)
-            self.clear_user_form()
-            QMessageBox.information(
-                self.application, "Создание завершено", "Пользователь успешно создан", QMessageBox.Ok
-            )
-        else:
-            self.current_user.firstname = new_firstname
-            self.current_user.lastname = new_lastname
-            self.current_user.middlename = new_middlename
-            self.current_user.phone = new_phone
-            self.user_service.update(self.current_user)
+        try:
+            user_service = UserService(self.application.conn)
+            if self.is_new_user_mode:
+                user = InUser(
+                    firstname=new_firstname,
+                    lastname=new_lastname,
+                    middlename=new_middlename,
+                    phone=new_phone,
+                )
 
-            for (index, user) in enumerate(self.users):
-                if user.id == self.current_user.id:
-                    self.users[index] = self.current_user
-                    break
-            self.update_user_list()
+                user_service.create(user)
+                self.clear_user_form()
+                QMessageBox.information(
+                    self.application, "Создание завершено", "Пользователь успешно создан", QMessageBox.Ok
+                )
+            else:
+                self.current_user.firstname = new_firstname
+                self.current_user.lastname = new_lastname
+                self.current_user.middlename = new_middlename
+                self.current_user.phone = new_phone
+                user_service.update(self.current_user)
 
-            self.clear_user_form()
-            self.current_user = None
-            self.start_new_mode()
-            QMessageBox.information(
-                self.application, "Редактирование завершено", "Данные о пользователе успешно сохранены", QMessageBox.Ok
-            )
+                for (index, user) in enumerate(self.users):
+                    if user.id == self.current_user.id:
+                        self.users[index] = self.current_user
+                        break
+                self.update_user_list()
+
+                self.clear_user_form()
+                self.current_user = None
+                self.start_new_mode()
+                QMessageBox.information(
+                    self.application, "Редактирование завершено", "Данные о пользователе успешно сохранены", QMessageBox.Ok
+                )
+        except ConnectionError:
+            return

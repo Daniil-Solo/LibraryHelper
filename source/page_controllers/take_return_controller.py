@@ -8,10 +8,9 @@ from services.user_book_service import UserBookService, InUserBook
 
 
 class TakeReturnController:
-    def __init__(self, application, ui, conn):
+    def __init__(self, application, ui):
         self.application = application
         self.ui = ui
-        self.conn = conn
 
         self.search_users = []
         self.current_user = None
@@ -20,7 +19,6 @@ class TakeReturnController:
 
         self.set_default_expected_return_date()
         self.bind_methods()
-        self.user_book_service = UserBookService(self.conn)
 
     @property
     def is_take_fact(self):
@@ -41,13 +39,16 @@ class TakeReturnController:
         self.ui.newFactBtn.clicked.connect(self.create_new_fact)
 
     def search_user(self):
-        user_service = UserService(self.conn)
-        self.search_users = user_service.get_list_by_search_conditions(
-            firstname=self.ui.searchFirstnameLineEdit.text(),
-            lastname=self.ui.factLastnameLineEdit.text(),
-            middlename=self.ui.searchMiddlenameLineEdit.text(),
-        )
-        self.update_user_list()
+        try:
+            user_service = UserService(self.application.conn)
+            self.search_users = user_service.get_list_by_search_conditions(
+                firstname=self.ui.searchFirstnameLineEdit.text(),
+                lastname=self.ui.factLastnameLineEdit.text(),
+                middlename=self.ui.searchMiddlenameLineEdit.text(),
+            )
+            self.update_user_list()
+        except ConnectionError:
+            return
 
     def update_user_list(self):
         self.ui.factSearchUserList.clear()
@@ -91,12 +92,15 @@ class TakeReturnController:
                 self.application, "Ошибка", "Пользователь не выбран", QMessageBox.Ok
             )
             return
-        book_service = BookService(self.conn)
-        if self.is_take_fact:
-            self.search_books = book_service.get_free_books()
-        else:
-            self.search_books = book_service.get_books_on_user_hands(self.current_user.id)
-        self.update_search_book_list()
+        try:
+            book_service = BookService(self.application.conn)
+            if self.is_take_fact:
+                self.search_books = book_service.get_free_books()
+            else:
+                self.search_books = book_service.get_books_on_user_hands(self.current_user.id)
+            self.update_search_book_list()
+        except ConnectionError:
+            return
 
     def update_search_book_list(self):
         self.ui.factSearchBookList.clear()
@@ -148,27 +152,31 @@ class TakeReturnController:
                 self.application, "Ошибка", "Не выбраны книги", QMessageBox.Ok
             )
             return
-        if self.is_take_fact:
-            if self.ui.expectedReturnDate.date() <= QDate.currentDate():
-                QMessageBox.critical(
-                    self.application, "Ошибка", "Дата возвращения должна быть позже сегодняшней даты", QMessageBox.Ok
+        try:
+            user_book_service = UserBookService(self.application.conn)
+            if self.is_take_fact:
+                if self.ui.expectedReturnDate.date() <= QDate.currentDate():
+                    QMessageBox.critical(
+                        self.application, "Ошибка", "Дата возвращения должна быть позже сегодняшней даты", QMessageBox.Ok
+                    )
+                    return
+                expected_return_date = self.ui.expectedReturnDate.date().toPyDate()
+                for book in self.books:
+                    user_book_service.create(
+                        InUserBook(user_id=self.current_user.id, book_id=book.id, expected_return_date=expected_return_date)
+                    )
+                QMessageBox.information(
+                    self.application, "Создание завершено", "Факт выдачи успешно создан", QMessageBox.Ok
                 )
-                return
-            expected_return_date = self.ui.expectedReturnDate.date().toPyDate()
-            for book in self.books:
-                self.user_book_service.create(
-                    InUserBook(user_id=self.current_user.id, book_id=book.id, expected_return_date=expected_return_date)
+            else:
+                current_date = datetime.date.today()
+                user_book_service.update_real_return_date(
+                    user_id=self.current_user.id, book_id_list=[book.id for book in self.books],
+                    real_return_date=current_date
                 )
-            QMessageBox.information(
-                self.application, "Создание завершено", "Факт выдачи успешно создан", QMessageBox.Ok
-            )
-        else:
-            current_date = datetime.date.today()
-            self.user_book_service.update_real_return_date(
-                user_id=self.current_user.id, book_id_list=[book.id for book in self.books],
-                real_return_date=current_date
-            )
-            QMessageBox.information(
-                self.application, "Создание завершено", "Факт возвращения успешно создан", QMessageBox.Ok
-            )
-        self.clear_fact_fields()
+                QMessageBox.information(
+                    self.application, "Создание завершено", "Факт возвращения успешно создан", QMessageBox.Ok
+                )
+            self.clear_fact_fields()
+        except ConnectionError:
+            return
