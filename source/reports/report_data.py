@@ -1,55 +1,55 @@
 report_1 = dict(
     title="Сколько книг брал каждый читатель за все время",
     query="""
-            select 
-                u.lastname || ' ' || u.firstname || ' ' || u.middlename as ФИО, 
-                coalesce(gbfu.cnt, 0) as "Количество книг"
-            from users u
-            left join (
-                select bfu.user_id as user_id, count(distinct bfu.book_id) as cnt
-                from books_for_users bfu
-                group by bfu.user_id
-            ) gbfu
-            on u.id = gbfu.user_id
-            order by ФИО;
-        """,
+        select 
+            u.lastname || ' ' || u.firstname || ' ' || u.middlename as ФИО, 
+            coalesce(gbfu.cnt, 0) as "Количество книг"
+        from users u
+        left join (
+            select bfu.user_id as user_id, count(distinct bfu.book_id) as cnt
+            from books_for_users bfu
+            group by bfu.user_id
+        ) gbfu
+        on u.id = gbfu.user_id
+        order by ФИО;
+    """,
     headings_cells=["ФИО", "Количество книг"]
 )
 
 report_2 = dict(
     title="Дата последнего посещения читателем библиотеки",
     query="""
-            select 
-                u.lastname || ' ' || u.firstname || ' ' || u.middlename as ФИО, 
-                coalesce(return_date, take_date, u.register_date) as "Последнее посещение" 
-            from users u
-            left join (
-                select bfu.user_id as user_id, max(real_return_date) as return_date, max(take_date) as take_date
-                from books_for_users bfu
-                group by bfu.user_id
-            ) gbfu
-            on u.id = gbfu.user_id
-            order by ФИО;
-        """,
+        select 
+            u.lastname || ' ' || u.firstname || ' ' || u.middlename as ФИО, 
+            coalesce(return_date, take_date, u.register_date) as "Последнее посещение" 
+        from users u
+        left join (
+            select bfu.user_id as user_id, max(real_return_date) as return_date, max(take_date) as take_date
+            from books_for_users bfu
+            group by bfu.user_id
+        ) gbfu
+        on u.id = gbfu.user_id
+        order by ФИО;
+    """,
     headings_cells=["ФИО", "Последнее посещение"]
 )
 
 report_3 = dict(
     title="Самый предпочитаемые читателями жанры по убыванию",
     query="""
-            select 
-                g.name as "Название жанра", coalesce(g_cnt.cnt, 0) as "Количество фактов взятия"
-            from genres g
-            left join (
-                select gfb.genre_id, count(*) as cnt
-                from genres_for_books gfb
-                inner join books_for_users bfu
-                on bfu.book_id = gfb.book_id
-                group by gfb.genre_id
-            ) g_cnt
-            on g.id = g_cnt.genre_id
-            order by "Количество фактов взятия" desc;
-        """,
+        select 
+            g.name as "Название жанра", coalesce(g_cnt.cnt, 0) as "Количество фактов взятия"
+        from genres g
+        left join (
+            select gfb.genre_id, count(*) as cnt
+            from genres_for_books gfb
+            inner join books_for_users bfu
+            on bfu.book_id = gfb.book_id
+            group by gfb.genre_id
+        ) g_cnt
+        on g.id = g_cnt.genre_id
+        order by "Количество фактов взятия" desc;
+    """,
     headings_cells=["ФИО", "Количество фактов взятия"]
 )
 
@@ -66,11 +66,11 @@ report_4 = dict(
             inner join books_for_users bfu
             on bfu.book_id = gfb.book_id
             group by bfu.user_id, gfb.genre_id
-            order by bfu.user_id, cnt desc, gfb.genre_id
         ) ugc
         on ugc.user_id = u.id
         left join genres g
-        on ugc.genre_id = g.id;
+        on ugc.genre_id = g.id
+        order by ФИО;
     """,
     headings_cells=["ФИО", "Жанр"]
 )
@@ -78,16 +78,16 @@ report_4 = dict(
 report_5 = dict(
     title="Читатели и книги, которые не были возвращены вовремя",
     query="""
-            select u.lastname || ' ' || u.firstname || ' ' || u.middlename as ФИО, 
-                b.name as Книга
-            from books_for_users bfu
-            inner join users u
-            on bfu.user_id = u.id
-            inner join books b
-            on bfu.book_id = b.id
-            where bfu.real_return_date is NULL or bfu.expected_return_date < bfu.real_return_date
-            order by ФИО;
-        """,
+        select u.lastname || ' ' || u.firstname || ' ' || u.middlename as ФИО, 
+            b.name as Книга
+        from books_for_users bfu
+        inner join users u
+        on bfu.user_id = u.id
+        inner join books b
+        on bfu.book_id = b.id
+        where bfu.real_return_date is NULL or bfu.expected_return_date < bfu.real_return_date
+        order by ФИО;
+    """,
     headings_cells=["ФИО", "Книга"]
 )
 
