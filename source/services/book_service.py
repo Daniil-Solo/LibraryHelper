@@ -91,3 +91,17 @@ class BookService(BaseModelService):
             cursor.execute(query)
             rows = cursor.fetchall()
         return [self.OUT_MODEL(*row) for row in rows]
+
+    def get_book_place(self, book_id: int) -> str:
+        query = f"""
+            select u.lastname || ' ' || u.firstname || ' ' || u.middlename
+            from users u
+            inner join books_for_users bfu
+            on bfu.user_id = u.id
+            where bfu.book_id = {book_id} and bfu.real_return_date is NULL
+        """
+
+        with self.conn.cursor() as cursor:
+            cursor.execute(query)
+            row = cursor.fetchone()
+        return f"На руках у читателя {row[0]}" if row else "В библиотеке"
