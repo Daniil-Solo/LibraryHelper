@@ -43,9 +43,9 @@ class BaseModelService(ABC):
             out_data = self.OUT_MODEL(id=data_id, **fields)
             self.conn.commit()
             return out_data
-        except errors.lookup(UNIQUE_VIOLATION) as e:
+        except errors.lookup(UNIQUE_VIOLATION):
             self.conn.rollback()
-            raise UniqueException(e)
+            raise UniqueException()
 
     def delete(self, data_id: int) -> None:
         """
@@ -76,9 +76,9 @@ class BaseModelService(ABC):
                 cursor.execute(query, fields)
             self.conn.commit()
             return data
-        except errors.lookup(UNIQUE_VIOLATION) as e:
+        except errors.lookup(UNIQUE_VIOLATION):
             self.conn.rollback()
-            raise UniqueException(e)
+            raise UniqueException()
 
     def get_list_by_search_conditions(self, **conditions) -> list[OUT_MODEL]:
         """
