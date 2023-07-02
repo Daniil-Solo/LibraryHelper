@@ -162,6 +162,7 @@ class BookController:
     def clear_book_form(self):
         self.ui.BookLineEdit.setText("")
         self.ui.registerDateBookLabel.setText("")
+        self.ui.bookPlace.setText("")
 
         self.ui.searchGenreBookLineEdit.setText("")
         self.ui.searchAuthorBookLineEdit.setText("")
@@ -184,6 +185,7 @@ class BookController:
         self.start_edit_mode()
         index = self.ui.searchBookList.currentRow()
         self.current_book = self.books[index]
+        self.ui.bookPlace.setText(self.book_service.get_book_place(self.current_book.id))
         self.current_book_genres = self.book_service.get_genres(self.current_book.id)
         self.current_book_authors = self.book_service.get_authors(self.current_book.id)
         self.old_book_genres = [bg for bg in self.current_book_genres]
