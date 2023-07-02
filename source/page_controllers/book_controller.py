@@ -173,6 +173,7 @@ class BookController:
         self.ui.BookLineEdit.setText("")
         self.ui.registerDateBookLabel.setText("")
         self.ui.bookPlace.setText("")
+        self.current_book = None
 
         self.ui.searchGenreBookLineEdit.setText("")
         self.ui.searchAuthorBookLineEdit.setText("")
@@ -181,6 +182,10 @@ class BookController:
         self.ui.searchAuthorBookList.clear()
         self.ui.genreBookList.clear()
         self.ui.authorBookList.clear()
+        self.search_authors = []
+        self.search_genres = []
+        self.current_book_authors = []
+        self.current_book_genres = []
 
     def create_new_book(self):
         self.start_new_mode()
@@ -261,7 +266,6 @@ class BookController:
                 self.application, "Ошибка", "Книга с таким названием уже существует", QMessageBox.Ok
             )
             return
-        print(self.current_book_authors, self.old_book_authors)
         for author in self.current_book_authors:
             if author not in self.old_book_authors:
                 book_service.add_author(self.current_book.id, author.id)

@@ -63,6 +63,7 @@ class UserController:
         self.ui.middlenameLineEdit.setText("")
         self.ui.phoneLineEdit.setText("")
         self.ui.registerDateLabel.setText("")
+        self.current_user = None
 
     def create_new_user(self):
         self.start_new_mode()

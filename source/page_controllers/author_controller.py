@@ -55,6 +55,7 @@ class AuthorController:
 
     def clear_author_form(self):
         self.ui.authorLineEdit.setText("")
+        self.current_author = None
 
     def create_new_author(self):
         self.start_new_mode()
@@ -128,7 +129,6 @@ class AuthorController:
         self.update_author_list()
 
         self.clear_author_form()
-        self.current_author = None
         self.start_new_mode()
         QMessageBox.information(
             self.application, "Редактирование завершено", "Данные об авторе успешно сохранены", QMessageBox.Ok

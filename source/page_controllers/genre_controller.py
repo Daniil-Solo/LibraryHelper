@@ -55,6 +55,7 @@ class GenreController:
 
     def clear_genre_form(self):
         self.ui.genreLineEdit.setText("")
+        self.current_genre = None
 
     def create_new_genre(self):
         self.start_new_mode()
