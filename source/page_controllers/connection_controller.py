@@ -8,22 +8,31 @@ class ConnectionController:
         self.application = application
         self.ui = ui
         self.config = config
+        self.conn = None
         self.bind_methods()
-        self.connect_to_db()
         self.update_connection_settings()
 
     def bind_methods(self):
         self.ui.saveDBConnectionData.clicked.connect(self.save_connect_data)
 
-    def connect_to_db(self) -> bool:
+    def get_connection(self):
+        if not self.conn:
+            self.connect_to_db()
+        return self.conn
+
+    def close_connection(self):
+        if self.conn:
+            self.conn.close()
+
+    def connect_to_db(self):
         try:
-            self.application.conn = get_connection(self.config.db_data)
-            return True
+            self.conn = get_connection(self.config.db_data)
         except OperationalError:
             QMessageBox.critical(
-                self.application, "Ошибка соединения", "Укажите верные данные для подключения к базе данных", QMessageBox.Ok
+                self.application, "Ошибка соединения",
+                "Укажите верные данные для подключения к базе данных", QMessageBox.Ok
             )
-            return False
+            raise ConnectionError
 
     def update_connection_settings(self):
         self.ui.hostLineEdit.setText(self.config.db_data["host"])
@@ -40,13 +49,18 @@ class ConnectionController:
             "password": self.ui.passwordLineEdit.text(),
             "dbname": self.ui.dbNameLineEdit.text()
         }
-        self.update_connection_settings()
         QMessageBox.information(
             self.application, 'Данные о подключении успешно сохранены',
             'Данные о подключении успешно сохранены', QMessageBox.Ok
         )
-        if self.connect_to_db():
+        try:
+            self.connect_to_db()
             QMessageBox.information(
                 self.application, 'Подключение восстановлено',
                 'Подключение восстановлено', QMessageBox.Ok
+            )
+        except ConnectionError:
+            QMessageBox.critical(
+                self.application, "Ошибка соединения",
+                "Укажите верные данные для подключения к базе данных", QMessageBox.Ok
             )
