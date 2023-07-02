@@ -52,6 +52,7 @@ class UserController:
         )
 
     def clear_user_form(self):
+        self.ui.bookHistoryList.clear()
         self.ui.firstnameLineEdit.setText("")
         self.ui.lastnameLineEdit.setText("")
         self.ui.middlenameLineEdit.setText("")
@@ -71,6 +72,12 @@ class UserController:
         self.start_edit_mode()
         index = self.ui.userList.currentRow()
         self.current_user = self.users[index]
+        book_history_list = self.user_service.get_user_book_history(self.current_user.id)
+        self.ui.bookHistoryList.clear()
+        self.ui.bookHistoryList.addItems(
+            [f"{str(book.take_date)} - {book.name} ({'возвращена' if book.is_returned else 'на руках'})"
+             for book in book_history_list]
+        )
         self.ui.firstnameLineEdit.setText(self.current_user.firstname)
         self.ui.lastnameLineEdit.setText(self.current_user.lastname)
         self.ui.middlenameLineEdit.setText(self.current_user.middlename)
