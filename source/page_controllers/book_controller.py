@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 from services.author_service import AuthorService
 from services.book_service import BookService, InBook
+from services.exceptions import UniqueException
 from services.genre_service import GenreService
 
 
@@ -209,7 +210,13 @@ class BookController:
     def save_book(self):
         new_name = self.ui.BookLineEdit.text()
         if self.is_new_book_mode:
-            book = self.book_service.create(InBook(name=new_name))
+            try:
+                book = self.book_service.create(InBook(name=new_name))
+            except UniqueException:
+                QMessageBox.critical(
+                    self.application, "Ошибка", "Книга с таким названием уже существует", QMessageBox.Ok
+                )
+                return
             for genre in self.current_book_genres:
                 self.book_service.add_genre(book.id, genre.id)
             for author in self.current_book_authors:
@@ -220,7 +227,13 @@ class BookController:
             )
         else:
             self.current_book.name = new_name
-            self.book_service.update(self.current_book)
+            try:
+                self.book_service.update(self.current_book)
+            except UniqueException:
+                QMessageBox.critical(
+                    self.application, "Ошибка", "Книга с таким названием уже существует", QMessageBox.Ok
+                )
+                return
             print(self.current_book_authors, self.old_book_authors)
             for author in self.current_book_authors:
                 if author not in self.old_book_authors:

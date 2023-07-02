@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QMessageBox
 
 from services.author_service import AuthorService, InAuthor
+from services.exceptions import UniqueException
 
 
 class AuthorController:
@@ -81,15 +82,26 @@ class AuthorController:
             author = InAuthor(
                 full_name=new_full_name
             )
-            self.author_service.create(author)
+            try:
+                self.author_service.create(author)
+            except UniqueException:
+                QMessageBox.critical(
+                    self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
+                )
+                return
             self.clear_author_form()
             QMessageBox.information(
                 self.application, "Создание завершено", "Автор успешно создан", QMessageBox.Ok
             )
         else:
             self.current_author.full_name = new_full_name
-            self.author_service.update(self.current_author)
-
+            try:
+                self.author_service.update(self.current_author)
+            except UniqueException:
+                QMessageBox.critical(
+                    self.application, "Ошибка", "Автор с таким именем уже существует", QMessageBox.Ok
+                )
+                return
             for (index, author) in enumerate(self.authors):
                 if author.id == self.current_author.id:
                     self.authors[index] = self.current_author

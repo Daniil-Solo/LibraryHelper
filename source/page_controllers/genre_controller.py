@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QMessageBox
 
 from services.genre_service import GenreService, InGenre
-
+from services.exceptions import UniqueException
 
 class GenreController:
     def __init__(self, application, ui, conn):
@@ -81,15 +81,26 @@ class GenreController:
             genre = InGenre(
                 name=new_name
             )
-            self.genre_service.create(genre)
+            try:
+                self.genre_service.create(genre)
+            except UniqueException:
+                QMessageBox.critical(
+                    self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
+                )
+                return
             self.clear_genre_form()
             QMessageBox.information(
                 self.application, "Создание завершено", "Жанр успешно создан", QMessageBox.Ok
             )
         else:
             self.current_genre.name = new_name
-            self.genre_service.update(self.current_genre)
-
+            try:
+                self.genre_service.update(self.current_genre)
+            except UniqueException:
+                QMessageBox.critical(
+                    self.application, "Ошибка", "Жанр с таким названием уже существует", QMessageBox.Ok
+                )
+                return
             for (index, genre) in enumerate(self.genres):
                 if genre.id == self.current_genre.id:
                     self.genres[index] = self.current_genre
