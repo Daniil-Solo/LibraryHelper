@@ -63,3 +63,9 @@ pyinstaller ./app.py --noconsole --onefile --icon=./ui/icon.ico --add-data ./fon
 - добавить стили для интерфейса
 - проанализировать какие столбцы таблиц нуждаются в индексах
 - ожидание ответа от БД делегировать другому потоку QThread
+
+## Демонстрация приложения
+![](https://github.com/Daniil-Solo/LibraryHelper/blob/master/images/books.jpg "Работа с книгами")
+![](https://github.com/Daniil-Solo/LibraryHelper/blob/master/images/connection.jpg "Подключение к базе данных")
+![](https://github.com/Daniil-Solo/LibraryHelper/blob/master/images/fact.jpg "Создание факта выдачи/возвращения книги")
+![](https://github.com/Daniil-Solo/LibraryHelper/blob/master/images/users.jpg "Работа с пользователем")
