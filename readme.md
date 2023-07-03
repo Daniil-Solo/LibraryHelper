@@ -63,6 +63,7 @@ pyinstaller ./app.py --noconsole --onefile --icon=./ui/icon.ico --add-data ./fon
 - добавить стили для интерфейса
 - проанализировать какие столбцы таблиц нуждаются в индексах
 - ожидание ответа от БД делегировать другому потоку QThread
+- использовать ORM, например, SQLAlchemy, вместо base-service и base-middle-service
 
 ## Демонстрация приложения
 ![](https://github.com/Daniil-Solo/LibraryHelper/blob/master/images/books.jpg "Работа с книгами")
